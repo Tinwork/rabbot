@@ -7,6 +7,8 @@ const {
 
 const app = express()
 
+app.set('port', (process.env.PORT || 5000));
+
 app.use(bodyParser.json())
 
 app.get('/', function (req, res) {
@@ -15,6 +17,6 @@ app.get('/', function (req, res) {
 
 app.post('/api/messages', connector.listen())
 
-app.listen(3978, () => {
-  console.log('Running at 3978');
-})
+app.listen(app.get('port'), function () {
+  console.log('Node app is running on port', app.get('port'));
+});
