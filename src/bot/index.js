@@ -51,12 +51,26 @@ bot.dialog('askQuestions', [
     session.dialogData.form = args ? args.form : {}
 
     // Prompt user for next field
-    switch(questions[session.dialogData.index].type) {
+    switch (questions[session.dialogData.index].type) {
       case 'string':
         builder.Prompts.text(session, questions[session.dialogData.index].body)
         break
+
       case 'int':
-        builder.Prompts.number(session, questions[session.dialogData.index].body)
+        builder.Prompts.number(
+          session,
+          questions[session.dialogData.index].body
+        )
+        break
+
+      case 'enum':
+        builder.Prompts.choice(
+          session,
+          questions[session.dialogData.index].body,
+          questions[session.dialogData.index].enum
+        )
+        break
+
       default:
         builder.Prompts.text(session, questions[session.dialogData.index].body)
     }
@@ -79,6 +93,7 @@ bot.dialog('askQuestions', [
   },
   function(session, response) {
     session.send('Merci d"avoir répondu aux questions')
+    sendResponseData(response)
     session.beginDialog('uploadCV')
   }
 ])
@@ -130,8 +145,6 @@ bot.dialog('chooseDate', [
 
 bot.beginDialogAction('job', '/job')
 
-
-
 const getJobCarrousel = session => {
   return new Promise((resolve, reject) => {
     request({
@@ -180,6 +193,45 @@ const getQuestions = id => {
         throw new Error('Connection error', err)
       })
   })
+}
+
+const sendResponseData = response => {
+  // data = {
+  //   candidat: {
+  //     firstname: 'Youn',
+  //     lastname: 'Dupont',
+  //     email: 'john@gmail.com',
+  //     mobile: '+3365518743'
+  //   },
+  //   profile_1244: {
+  //     question_1: {
+  //       libelle: 'Quel est vôtre âge ?',
+  //       open: true,
+  //       response: '27 ans'
+  //     },
+  //     question_2: {
+  //       libelle: "Quels sont vos centres d'activités ?",
+  //       open: false,
+  //       response: 'Le sport, la musique et la cuisine'
+  //     }
+  //   }
+  // }
+  const options = {
+    method: 'POST',
+    uri: baseUrl,
+    body: {
+      data: response
+    },
+    json: true
+  }
+
+  request(options)
+    .then(parsedBody => {
+      // POST succeeded...
+    })
+    .catch(err => {
+      // POST failed...
+    })
 }
 
 const requestWithToken = url => {
