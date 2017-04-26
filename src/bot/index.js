@@ -17,25 +17,33 @@ const bot = new builder.UniversalBot(connector, [
   }
 ])
 
-bot.dialog('jobCarrousel', [
-  function(session) {
-    session.send('Voulez-vous postulez pour un de ces profiles ?')
-    getJobCarrousel(session).then(cards => {
-      var reply = new builder.Message(session)
-        .attachmentLayout(builder.AttachmentLayout.carousel)
-        .attachments(cards)
-      session.send(reply)
-    })
-  }
-])
+bot
+  .dialog('jobCarrousel', [
+    function(session) {
+      session.send('Voulez-vous postulez pour un de ces profiles ?')
+      getJobCarrousel(session).then(cards => {
+        var reply = new builder.Message(session)
+          .attachmentLayout(builder.AttachmentLayout.carousel)
+          .attachments(cards)
+        session.send(reply)
+      })
+    }
+  ])
+  .reloadAction('jobCarrousel', null, {
+    matches: /^menu|show menu|reload|list|start|restart/i
+  })
+
+bot.endConversationAction('goodbyeAction', 'Ok... See you next time.', {
+  matches: /^goodbye|quit|bye/i
+})
 
 bot.dialog('/job', [
   function(session, args) {
-    questions = []
-    session.send('You choose job id %s', args.data)
+    session.userData.questions = []
+    session.sendTyping();
     getQuestions(args.data).then(data => {
       // FIXME: Lookl at session
-      questions = data.questions
+      session.userData.questions = data.questions
       session.beginDialog('askQuestions')
     })
   },
@@ -51,37 +59,37 @@ bot.dialog('askQuestions', [
     session.dialogData.form = args ? args.form : {}
 
     // Prompt user for next field
-    switch (questions[session.dialogData.index].type) {
+    switch (session.userData.questions[session.dialogData.index].type) {
       case 'string':
-        builder.Prompts.text(session, questions[session.dialogData.index].body)
+        builder.Prompts.text(session, session.userData.questions[session.dialogData.index].body)
         break
 
       case 'int':
         builder.Prompts.number(
           session,
-          questions[session.dialogData.index].body
+          session.userData.questions[session.dialogData.index].body
         )
         break
 
       case 'enum':
         builder.Prompts.choice(
           session,
-          questions[session.dialogData.index].body,
-          questions[session.dialogData.index].enum
+          session.userData.questions[session.dialogData.index].body,
+          session.userData.questions[session.dialogData.index].enum
         )
         break
 
       default:
-        builder.Prompts.text(session, questions[session.dialogData.index].body)
+        builder.Prompts.text(session, session.userData.questions[session.dialogData.index].body)
     }
   },
   function(session, results) {
     // Save users reply
-    var field = questions[session.dialogData.index++].id
+    var field = session.userData.questions[session.dialogData.index++].id
     session.dialogData.form[field] = results.response
 
     // Check for end of form
-    if (session.dialogData.index >= questions.length) {
+    if (session.dialogData.index >= session.userData.questions.length) {
       // Return completed form
       session.endDialogWithResult({
         response: session.dialogData.form
