@@ -4,7 +4,7 @@ const request = require('request-promise').defaults({
   encoding: null
 })
 const baseUrl = 'http://ec2-54-77-243-23.eu-west-1.compute.amazonaws.com'
-
+let questions = []
 const connector = new builder.ChatConnector({
   appId: process.env.MICROSOFT_APP_ID,
   appPassword: process.env.MICROSOFT_APP_PASSWORD
@@ -31,8 +31,13 @@ bot.dialog('jobCarrousel', [
 
 bot.dialog('/job', [
   function(session, args) {
+    questions = []
     session.send('You choose job id %s', args.data)
-    session.beginDialog('askQuestions')
+    getQuestions(args.data).then(data => {
+      // FIXME: Lookl at session
+      questions = data.questions
+      session.beginDialog('askQuestions')
+    })
   },
   function(session) {
     session.beginDialog('uploadCV')
@@ -46,11 +51,19 @@ bot.dialog('askQuestions', [
     session.dialogData.form = args ? args.form : {}
 
     // Prompt user for next field
-    builder.Prompts.text(session, questions[session.dialogData.index].prompt)
+    switch(questions[session.dialogData.index].type) {
+      case 'string':
+        builder.Prompts.text(session, questions[session.dialogData.index].body)
+        break
+      case 'int':
+        builder.Prompts.number(session, questions[session.dialogData.index].body)
+      default:
+        builder.Prompts.text(session, questions[session.dialogData.index].body)
+    }
   },
   function(session, results) {
     // Save users reply
-    var field = questions[session.dialogData.index++].field
+    var field = questions[session.dialogData.index++].id
     session.dialogData.form[field] = results.response
 
     // Check for end of form
@@ -65,7 +78,6 @@ bot.dialog('askQuestions', [
     }
   },
   function(session, response) {
-    console.log(response)
     session.send('Merci d"avoir répondu aux questions')
     session.beginDialog('uploadCV')
   }
@@ -118,20 +130,7 @@ bot.dialog('chooseDate', [
 
 bot.beginDialogAction('job', '/job')
 
-const questions = [
-  {
-    field: 'name',
-    prompt: "What's your name?"
-  },
-  {
-    field: 'age',
-    prompt: 'How old are you?'
-  },
-  {
-    field: 'state',
-    prompt: 'What state are you in?'
-  }
-]
+
 
 const getJobCarrousel = session => {
   return new Promise((resolve, reject) => {
@@ -164,8 +163,21 @@ const getJobCarrousel = session => {
         }, [])
         resolve(result)
       })
-      .catch(function(err) {
-        throw new Error('Connection error')
+      .catch(err => {
+        throw new Error('Connection error', err)
+      })
+  })
+}
+
+const getQuestions = id => {
+  return new Promise((resolve, reject) => {
+    request({
+      uri: baseUrl + `/jobs/getdetailjob/${id}`,
+      json: true
+    })
+      .then(resolve)
+      .catch(err => {
+        throw new Error('Connection error', err)
       })
   })
 }
