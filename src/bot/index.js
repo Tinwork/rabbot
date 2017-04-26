@@ -1,9 +1,13 @@
 const builder = require('botbuilder');
+const Promise = require('bluebird');
+const request = require('request-promise').defaults({
+  encoding: null
+})
 
 const connector = new builder.ChatConnector({
-  appId: '4f7dc17a-b470-4de8-8092-04450a26badd',
-  appPassword: 'vhWunAWp8tz6H8oBPd5nRAX'
-});
+  appId: process.env.MICROSOFT_APP_ID,
+  appPassword: process.env.MICROSOFT_APP_PASSWORD
+})
 
 const bot = new builder.UniversalBot(connector, [
   function (session) {
@@ -34,21 +38,7 @@ bot.dialog('/job', [
   function (session) {
     session.beginDialog('uploadCV')
   },
-]);
-
-var questions = [{
-    field: 'name',
-    prompt: "What's your name?"
-  },
-  {
-    field: 'age',
-    prompt: "How old are you?"
-  },
-  {
-    field: 'state',
-    prompt: "What state are you in?"
-  }
-];
+])
 
 bot.dialog('askQuestions', [
   function (session, args) {
@@ -84,11 +74,60 @@ bot.dialog('askQuestions', [
 
 bot.dialog('uploadCV', [
   function (session) {
-    session.send('Upload CV')
+    var msg = session.message;
+    if (msg.attachments.length) {
+      // Message with attachment, proceed to download it.
+      // Skype & MS Teams attachment URLs are secured by a JwtToken, so we need to pass the token from our bot.
+      var attachment = msg.attachments[0];
+      var fileDownload = checkRequiresToken(msg) ?
+        requestWithToken(attachment.contentUrl) :
+        request(attachment.contentUrl);
+
+      fileDownload.then(response => {
+        // Send reply with attachment type & size
+        var reply = new builder.Message(session)
+          .text('Attachment of %s type and size of %s bytes received.', attachment.contentType, response.length);
+        session.send(reply);
+        session.send('Merci d"avoir upload votre CV')
+        session.beginDialog('chooseDate')
+      }).catch(err => {
+        console.log('Error downloading attachment:', {
+          statusCode: err.statusCode,
+          message: err.response.statusMessage
+        })
+      })
+    } else {
+      // No attachments were sent
+      var reply = new builder.Message(session)
+        .text('Hi there! This sample is intented to show how can I receive attachments but no attachment was sent to me. Please try again sending a new message with an attachment.');
+      session.send(reply);
+    }
   }
 ])
 
-function getJobCarrousel(session) {
+bot.dialog('chooseDate', [
+  function (session) {
+    session.send('Choose a date')
+  }
+])
+
+bot.beginDialogAction('job', '/job');
+
+const questions = [{
+    field: 'name',
+    prompt: "What's your name?"
+  },
+  {
+    field: 'age',
+    prompt: "How old are you?"
+  },
+  {
+    field: 'state',
+    prompt: "What state are you in?"
+  }
+]
+
+const getJobCarrousel = session => {
   const data = [{
       "id": 9,
       "title": "nodejs",
@@ -183,7 +222,23 @@ function getJobCarrousel(session) {
   }, [])
 }
 
-bot.beginDialogAction('job', '/job');
+const requestWithToken = url => {
+  return obtainToken().then(function (token) {
+    return request({
+      url: url,
+      headers: {
+        'Authorization': 'Bearer ' + token,
+        'Content-Type': 'application/octet-stream'
+      }
+    })
+  })
+}
+
+const obtainToken = Promise.promisify(connector.getAccessToken.bind(connector));
+
+const checkRequiresToken = message => {
+  return message.source === 'skype' || message.source === 'msteams'
+}
 
 module.exports = {
   connector,
