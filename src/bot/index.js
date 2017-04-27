@@ -16,11 +16,13 @@ let staticQuestions = [
   },
   {
     field: 'email',
-    prompt: 'Quelle est votre email ?'
+    prompt: 'Quelle est votre email ?',
+    regex: /\S+@\S+\.\S+/
   },
   {
     field: 'mobile',
-    prompt: 'Quelle est votre mobile ?'
+    prompt: 'Quelle est votre mobile ? (Format : +33XXXXXXXX)',
+    regex: /^\+[0-9]{2,3}[0-9]\d{8,10}/
   }
 ]
 
@@ -133,19 +135,24 @@ bot.dialog('askStaticQuestions', [
     )
   },
   function(session, results) {
-    // Save users reply
-    let field = staticQuestions[session.userData.c.index++].field
-    session.userData.data.candidat[field] = results.response
+    const current = staticQuestions[session.userData.c.index]
 
-    // Check for end of form
-    if (session.userData.c.index >= staticQuestions.length) {
-      // Return completed form
-      session.endDialogWithResult({
-        response: session.userData.data.candidat
-      })
-    } else {
-      // Next field
+    if (current.regex && !current.regex.test(results.response)) {
       session.replaceDialog('askStaticQuestions', session.userData.c)
+    } else {
+      session.userData.data.candidat[current.field] = results.response
+      session.userData.c.index++
+
+      // Check for end of form
+      if (session.userData.c.index >= staticQuestions.length) {
+        // Return completed form
+        session.endDialogWithResult({
+          response: session.userData.data.candidat
+        })
+      } else {
+        // Next field
+        session.replaceDialog('askStaticQuestions', session.userData.c)
+      }
     }
   }
 ])
