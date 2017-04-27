@@ -1,0 +1,18 @@
+{
+  "locale_prompt": "What's your preferred language?",
+  "firstname": "Can you tell us your firstname?",
+  "lastname": "Got it. Can you tell us your lastname?",
+  "email": "Can you tell us your email? It will only used for recontacting you.",
+  "mobile": "Can you tell us your mobile with the format +33XXXXXXXX? It will only used for recontacting you.",
+  "goodbyeAction": "If you want to restart the conversation, say hello or type 'menu'.",
+  "greeting": "Hello ! I'm Rabbot, I'm programmed to find you a job 😉.",
+  "restart": "If you want to restart the conversation, say hello or type 'menu'.",
+  "help": "Global commands are accessible at any time :\n\n* menu - Exit and restart with the menu.\n* goodbye - Exit the conversation.\n* help - Show this text.",
+  "menu": "Do you want to ask for one of these jobs ?",
+  "upload_question": "Can you upload your CV in a PDF format ? If you can't, type 'skip'",
+  "upload_verified": "Your CV was upload.",
+  "upload_no_cv": "No CV was received",
+  "choose_date": "Choose a date. This functionality is not available",
+  "job_more": "Learn more",
+  "finish": "Your profile was send, you will soon receive a date for a rendez-vous. Thanks for your answer"
+}

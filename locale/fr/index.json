@@ -1,4 +1,5 @@
 {
+  "locale_prompt": "Quelle est votre langague préféré ?",
   "firstname": "Pouvez-vous m’indiquer votre nom ?",
   "lastname": "Bien reçu. Pouvez-vous m’indiquer votre prénom ?",
   "email": "Pouvez-vous m’indiquer votre e-mail ? Il ne sera utilisé que pour vous recontacter.",
@@ -10,7 +11,7 @@
   "menu": "Voulez-vous postuler pour un de ces profils ?",
   "upload_question": "Pouvez-vous télécharger votre CV en format PDF ? Si vous ne pouvez pas, taper 'skip'",
   "upload_verified": "Votre CV a été reçu.",
-  "upload_no_cv": "Pas de CV upload",
+  "upload_no_cv": "Pas de CV téléchargé",
   "choose_date": "Choisissez une date. Cette fonctionnalité n'est pas encore finalisée",
   "job_more": "Apprenez-en plus",
   "finish": "Votre profil a été envoyé, vous recevrez une demande de rendez-vous bientôt. Merci de vos réponses."

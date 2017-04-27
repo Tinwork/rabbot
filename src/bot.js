@@ -39,25 +39,50 @@ bot.endConversationAction('goodbyeAction', 'goodbyeAction', {
   matches: /^goodbye|quit|bye/i
 })
 
+const setLocale = (session, lang) => {
+  session.preferredLocale(lang, err => {
+    if (!err) {
+      return true
+    } else {
+      session.error(err)
+    }
+  })
+}
+
 bot.dialog('/', [
   function(session) {
-    session.preferredLocale('fr', err => {
+    setLocale(session, 'fr')
+    session.send('greeting')
+    session.send('help')
+    session.beginDialog('localePickerDialog')
+  }
+])
+
+bot.dialog('localePickerDialog', [
+  function(session) {
+    console.log('LOCALE ======= question')
+    builder.Prompts.choice(session, 'locale_prompt', ['Français', 'English'], {
+      listStyle: builder.ListStyle.button
+    })
+  },
+  function(session, results) {
+    console.log('RESULTS =======', results)
+    var locale
+    switch (results.response.entity) {
+      case 'English':
+        locale = 'en'
+        break
+      case 'Français':
+        locale = 'fr'
+        break
+    }
+    session.preferredLocale(locale, function(err) {
       if (!err) {
-        session.endDialog('')
+        session.beginDialog('/menu')
       } else {
         session.error(err)
       }
     })
-    session.send('greeting')
-    session.beginDialog('/help')
-  },
-  function(session) {
-    // Display menu
-    session.beginDialog('/menu')
-  },
-  function(session) {
-    // Always say goodbye
-    session.send('restart')
   }
 ])
 
@@ -139,9 +164,7 @@ bot.dialog('/job', [
   },
   function(session) {
     session.send('finish')
-    session.endConversation(
-      'restart'
-    )
+    session.endConversation('restart')
   }
 ])
 
@@ -264,9 +287,7 @@ bot
           .then(response => {
             console.log('ATTACHEMENT TYPE', attachment.contentType)
             if (attachment.contentType !== 'application/pdf') {
-              let reply = new builder.Message(session).text(
-                'upload_question'
-              )
+              let reply = new builder.Message(session).text('upload_question')
               session.send(reply)
             } else {
               session.send('upload_verified')
@@ -283,9 +304,7 @@ bot
           })
       } else {
         // No attachments were sent
-        let reply = new builder.Message(session).text(
-          'upload_question'
-        )
+        let reply = new builder.Message(session).text('upload_question')
         session.send(reply)
       }
     }
@@ -326,12 +345,7 @@ const getJobCarrousel = session => {
             )
           ])
           card.buttons([
-            builder.CardAction.dialogAction(
-              session,
-              'job',
-              job.id,
-              'job_more'
-            )
+            builder.CardAction.dialogAction(session, 'job', job.id, 'job_more')
           ])
           memo.push(card)
           return memo
