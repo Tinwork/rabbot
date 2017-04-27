@@ -8,20 +8,20 @@ let questions = []
 let staticQuestions = [
   {
     field: 'firstname',
-    prompt: 'Quelle est votre nom ?'
+    prompt: 'Pouvez-vous m’indiquer votre nom ?'
   },
   {
     field: 'lastname',
-    prompt: 'Quelle est votre prénom ?'
+    prompt: 'Bien reçu. Pouvez-vous m’indiquer votre prénom ?'
   },
   {
     field: 'email',
-    prompt: 'Quelle est votre email ?',
+    prompt: 'Pouvez-vous m’indiquer votre e-mail ? Il ne sera utilisé que pour vous recontacter.',
     regex: /\S+@\S+\.\S+/
   },
   {
     field: 'mobile',
-    prompt: 'Quelle est votre mobile ? (Format : +33XXXXXXXX)',
+    prompt: 'Pouvez-vous m’indiquer votre numéro de téléphone au format +33XXXXXXXX ? Il ne sera utilisé que pour vous recontacter.',
     regex: /^\+[0-9]{2,3}[0-9]\d{8,10}/
   }
 ]
@@ -37,7 +37,7 @@ bot.beginDialogAction('job', '/job')
 bot.beginDialogAction('help', '/help', { matches: /^help/i })
 bot.endConversationAction(
   'goodbyeAction',
-  'Si vous souhaitez relancer la conversation, parlez moi ou taper menu',
+  'Si vous souhaitez relancer la conversation, parlez-moi ou taper "menu"',
   {
     matches: /^goodbye|quit|bye/i
   }
@@ -45,7 +45,7 @@ bot.endConversationAction(
 
 bot.dialog('/', [
   function(session) {
-    session.send('Bonjour, je suis Jabbot.')
+    session.send('Hello ! Je suis Rabbot, on m’a programmé pour vous trouver un emploi 😉.')
     session.beginDialog('/help')
   },
   function(session) {
@@ -54,14 +54,14 @@ bot.dialog('/', [
   },
   function(session) {
     // Always say goodbye
-    session.send('Ok... See you later!')
+    session.send('Si vous souhaitez relancer la conversation, parlez-moi ou taper "menu"')
   }
 ])
 
 bot.dialog('/help', [
   function(session) {
     session.endDialog(
-      'Les commandes globales sont accessibles à tout moment :\n\n* menu - Exits a demo and returns to the menu.\n* goodbye - End this conversation.\n* help - Displays these commands.'
+      'Les commandes globales sont accessibles à tous moment :\n\n* menu - Quitte et relance le menu.\n* goodbye - Quitte la conversation.\n* help - Montre ce texte.'
     )
   }
 ])
@@ -69,7 +69,7 @@ bot.dialog('/help', [
 bot
   .dialog('/menu', [
     function(session) {
-      session.send('Voulez-vous postulez pour un de ces profiles ?')
+      session.send('Voulez-vous postuler pour un de ces profils ?')
       getJobCarrousel(session).then(cards => {
         let reply = new builder.Message(session)
           .attachmentLayout(builder.AttachmentLayout.carousel)
@@ -136,7 +136,7 @@ bot.dialog('/job', [
   },
   function(session) {
     session.endConversation(
-      'Si vous souhaitez relancer la conversation, parlez moi ou taper menu'
+      'Si vous souhaitez relancer la conversation, parlez-moi ou taper "menu"'
     )
   }
 ])
@@ -261,7 +261,7 @@ bot
             console.log('ATTACHEMENT TYPE', attachment.contentType)
             if (attachment.contentType !== 'application/pdf') {
               let reply = new builder.Message(session).text(
-                'Pouvez vous upload votre CV en format pdf ?'
+                'Pouvez-vous télécharger votre CV en format PDF ? Si vous ne pouvez pas, taper "skip"'
               )
               session.send(reply)
             } else {
@@ -280,7 +280,7 @@ bot
       } else {
         // No attachments were sent
         let reply = new builder.Message(session).text(
-          'Pouvez vous upload votre CV en format pdf ? Si vous ne pouvez pas, taper "skip"'
+          'Pouvez-vous télécharger votre CV en format PDF ? Si vous ne pouvez pas, taper "skip"'
         )
         session.send(reply)
       }
@@ -292,9 +292,10 @@ bot
 
 bot.dialog('chooseDate', [
   function(session) {
-    session.endDialog(
-      "Choississez une date. Cette fonctionnalité n'est pas encore finaliser."
-    )
+    session.endDialog('')
+    // session.endDialog(
+    //   "Choisissez une date. Cette fonctionnalité n'est pas encore finalisée"
+    // )
   }
 ])
 
@@ -322,7 +323,7 @@ const getJobCarrousel = session => {
               session,
               'job',
               job.id,
-              'Apprennez en plus sur ce job'
+              'Apprenez-en plus'
             )
           ])
           memo.push(card)
