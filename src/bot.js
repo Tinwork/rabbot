@@ -103,17 +103,38 @@ bot.dialog('/job', [
     session.beginDialog('askJobsQuestions')
   },
   function(session) {
-    session.send('Merci d"avoir répondu aux questions')
-    let data = session.userData
-    let response = {
-      candidat: data.data.candidat
-    }
-    response[`profile_${data.id}`] = data.data.profile
-    sendResponseData(response)
     session.beginDialog('uploadCV')
   },
-  function(session, args) {
-    session.beginDialog('chooseDate')
+  function(session, upload) {
+    session.sendTyping()
+    let response
+    const pdf = upload.response
+    let data = session.userData
+
+    if (pdf) {
+      const base64pdf = btoa(String.fromCharCode.apply(null, pdf))
+      response = {
+        candidat: data.data.candidat
+        // base64pdf: base64pdf
+      }
+    } else {
+      response = {
+        candidat: data.data.candidat
+        // base64pdf: base64pdf
+      }
+    }
+
+    response[`profile_${data.id}`] = data.data.profile
+    sendResponseData(response)
+      .then(result => {
+        session.send('Votre CV a été uploadé')
+        session.beginDialog('chooseDate')
+      })
+      .catch(err => {
+        session.send('Votre CV a été uploadé')
+        session.beginDialog('chooseDate')
+        throw new Error('Conncetion error', err)
+      })
   },
   function(session) {
     session.endConversation(
@@ -199,10 +220,17 @@ bot.dialog('askJobsQuestions', [
     // Save users reply
     let r = session.userData.questions[session.dialogData.index++]
     if (r.type === 'string' || r.type === 'int') {
-      session.userData.data.profile[`question_${r.id}`] = results.response
+      session.userData.data.profile[`question_${r.id}`] = {
+        libelle: r.body,
+        open: false,
+        response: results.response
+      }
     } else if (r.type === 'enum') {
-      session.userData.data.profile[`question_${r.id}`] =
-        results.response.entity
+      session.userData.data.profile[`question_${r.id}`] = {
+        libelle: r.body,
+        open: false,
+        response: results.response.entity
+      }
     }
 
     // Check for end of form
@@ -238,7 +266,10 @@ bot
               )
               session.send(reply)
             } else {
-              session.endDialog('Merci davoir upload votre CV')
+              session.send('Votre CV a été reçu.')
+              session.endDialogWithResult({
+                response: response
+              })
             }
           })
           .catch(err => {
@@ -271,7 +302,7 @@ bot.dialog('chooseDate', [
 const getJobCarrousel = session => {
   return new Promise((resolve, reject) => {
     request({
-      uri: baseUrl + '/jobs/getalljob',
+      uri: `${baseUrl}/jobs/getalljob`,
       json: true
     })
       .then(data => {
@@ -308,7 +339,7 @@ const getJobCarrousel = session => {
 const getQuestions = id => {
   return new Promise((resolve, reject) => {
     request({
-      uri: baseUrl + `/jobs/getdetailjob/${id}`,
+      uri: `${baseUrl}/jobs/getdetailjob/${id}`,
       json: true
     })
       .then(resolve)
@@ -319,22 +350,18 @@ const getQuestions = id => {
 }
 
 const sendResponseData = response => {
-  const options = {
-    method: 'POST',
-    uri: baseUrl,
-    body: {
-      data: response
-    },
-    json: true
-  }
+  return new Promise((resolve, reject) => {
+    const options = {
+      method: 'POST',
+      uri: `${baseUrl}/api/candidate`,
+      body: {
+        data: JSON.stringify(response)
+      },
+      json: true
+    }
 
-  request(options)
-    .then(parsedBody => {
-      // POST succeeded...
-    })
-    .catch(err => {
-      // POST failed...
-    })
+    request(options).then(resolve).catch(reject)
+  })
 }
 
 const requestWithToken = url => {
