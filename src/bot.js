@@ -312,7 +312,8 @@ const getJobCarrousel = session => {
           card.images([
             builder.CardImage.create(
               session,
-              job.img || 'https://pastebin.com/i/pastebin_logo_side_outline.png'
+              `${baseUrl}${job.thumb}` ||
+                'https://pastebin.com/i/pastebin_logo_side_outline.png'
             )
           ])
           card.buttons([
