@@ -5,34 +5,34 @@ const request = require('request-promise').defaults({
 })
 const baseUrl = 'http://ec2-54-77-243-23.eu-west-1.compute.amazonaws.com'
 let questions = []
+let staticQuestions = [
+  {
+    field: 'firstname',
+    prompt: 'Quelle est votre nom ?'
+  },
+  {
+    field: 'lastname',
+    prompt: 'Quelle est votre prénom ?'
+  },
+  {
+    field: 'email',
+    prompt: 'Quelle est votre email ?'
+  },
+  {
+    field: 'mobile',
+    prompt: 'Quelle est votre mobile ?'
+  }
+]
+
 const connector = new builder.ChatConnector({
   appId: process.env.MICROSOFT_APP_ID,
   appPassword: process.env.MICROSOFT_APP_PASSWORD
 })
 
-const bot = new builder.UniversalBot(connector, [
-  function(session) {
-    session.send('Bonjour, je suis Jabbot')
-    session.beginDialog('jobCarrousel')
-  }
-])
+const bot = new builder.UniversalBot(connector)
 
-bot
-  .dialog('jobCarrousel', [
-    function(session) {
-      session.send('Voulez-vous postulez pour un de ces profiles ?')
-      getJobCarrousel(session).then(cards => {
-        var reply = new builder.Message(session)
-          .attachmentLayout(builder.AttachmentLayout.carousel)
-          .attachments(cards)
-        session.send(reply)
-      })
-    }
-  ])
-  .reloadAction('jobCarrousel', null, {
-    matches: /^menu|show menu|reload|list|start|restart/i
-  })
-
+bot.beginDialogAction('job', '/job')
+bot.beginDialogAction('help', '/help', { matches: /^help/i })
 bot.endConversationAction(
   'goodbyeAction',
   'Si vous souhaitez relancer la conversation, parlez moi ou taper menu',
@@ -40,6 +40,45 @@ bot.endConversationAction(
     matches: /^goodbye|quit|bye/i
   }
 )
+
+bot.dialog('/', [
+  function(session) {
+    session.send('Bonjour, je suis Jabbot.')
+    session.beginDialog('/help')
+  },
+  function(session) {
+    // Display menu
+    session.beginDialog('/menu')
+  },
+  function(session) {
+    // Always say goodbye
+    session.send('Ok... See you later!')
+  }
+])
+
+bot.dialog('/help', [
+  function(session) {
+    session.endDialog(
+      'Les commandes globales sont accessibles à tout moment :\n\n* menu - Exits a demo and returns to the menu.\n* goodbye - End this conversation.\n* help - Displays these commands.'
+    )
+  }
+])
+
+bot
+  .dialog('/menu', [
+    function(session) {
+      session.send('Voulez-vous postulez pour un de ces profiles ?')
+      getJobCarrousel(session).then(cards => {
+        let reply = new builder.Message(session)
+          .attachmentLayout(builder.AttachmentLayout.carousel)
+          .attachments(cards)
+        session.send(reply)
+      })
+    }
+  ])
+  .reloadAction('/menu', null, {
+    matches: /^menu|show menu|reload|list|start|restart/i
+  })
 
 bot.dialog('/job', [
   function(session, args) {
@@ -81,25 +120,6 @@ bot.dialog('/job', [
   }
 ])
 
-var staticQuestions = [
-  {
-    field: 'firstname',
-    prompt: 'Quelle est votre nom ?'
-  },
-  {
-    field: 'lastname',
-    prompt: 'Quelle est votre prénom ?'
-  },
-  {
-    field: 'email',
-    prompt: 'Quelle est votre email ?'
-  },
-  {
-    field: 'mobile',
-    prompt: 'Quelle est votre mobile ?'
-  }
-]
-
 bot.dialog('askStaticQuestions', [
   function(session, args) {
     // Save previous state (create on first call)
@@ -114,7 +134,7 @@ bot.dialog('askStaticQuestions', [
   },
   function(session, results) {
     // Save users reply
-    var field = staticQuestions[session.userData.c.index++].field
+    let field = staticQuestions[session.userData.c.index++].field
     session.userData.data.candidat[field] = results.response
 
     // Check for end of form
@@ -156,7 +176,8 @@ bot.dialog('askJobsQuestions', [
         builder.Prompts.choice(
           session,
           session.userData.questions[session.dialogData.index].body,
-          session.userData.questions[session.dialogData.index].enum
+          session.userData.questions[session.dialogData.index].enum,
+          { listStyle: builder.ListStyle.button }
         )
         break
 
@@ -169,7 +190,7 @@ bot.dialog('askJobsQuestions', [
   },
   function(session, results) {
     // Save users reply
-    var r = session.userData.questions[session.dialogData.index++]
+    let r = session.userData.questions[session.dialogData.index++]
     if (r.type === 'string' || r.type === 'int') {
       session.userData.data.profile[`question_${r.id}`] = results.response
     } else if (r.type === 'enum') {
@@ -192,19 +213,19 @@ bot.dialog('askJobsQuestions', [
 
 bot.dialog('uploadCV', [
   function(session) {
-    var msg = session.message
+    let msg = session.message
     if (msg.attachments.length) {
       // Message with attachment, proceed to download it.
       // Skype & MS Teams attachment URLs are secured by a JwtToken, so we need to pass the token from our bot.
-      var attachment = msg.attachments[0]
-      var fileDownload = checkRequiresToken(msg)
+      let attachment = msg.attachments[0]
+      let fileDownload = checkRequiresToken(msg)
         ? requestWithToken(attachment.contentUrl)
         : request(attachment.contentUrl)
 
       fileDownload
         .then(response => {
           if (attachment.contentType !== 'application/pdf') {
-            var reply = new builder.Message(session).text(
+            let reply = new builder.Message(session).text(
               'Pouvez vous upload votre CV en format pdf ?'
             )
             session.send(reply)
@@ -220,7 +241,7 @@ bot.dialog('uploadCV', [
         })
     } else {
       // No attachments were sent
-      var reply = new builder.Message(session).text(
+      let reply = new builder.Message(session).text(
         'Pouvez vous upload votre CV en format pdf ?'
       )
       session.send(reply)
@@ -235,8 +256,6 @@ bot.dialog('chooseDate', [
     )
   }
 ])
-
-bot.beginDialogAction('job', '/job')
 
 const getJobCarrousel = session => {
   return new Promise((resolve, reject) => {
