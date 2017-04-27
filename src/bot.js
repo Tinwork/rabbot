@@ -8,20 +8,20 @@ let questions = []
 let staticQuestions = [
   {
     field: 'firstname',
-    prompt: 'Pouvez-vous m’indiquer votre nom ?'
+    prompt: 'firstname'
   },
   {
     field: 'lastname',
-    prompt: 'Bien reçu. Pouvez-vous m’indiquer votre prénom ?'
+    prompt: 'lastname'
   },
   {
     field: 'email',
-    prompt: 'Pouvez-vous m’indiquer votre e-mail ? Il ne sera utilisé que pour vous recontacter.',
+    prompt: 'email',
     regex: /\S+@\S+\.\S+/
   },
   {
     field: 'mobile',
-    prompt: 'Pouvez-vous m’indiquer votre numéro de téléphone au format +33XXXXXXXX ? Il ne sera utilisé que pour vous recontacter.',
+    prompt: 'mobile',
     regex: /^\+[0-9]{2,3}[0-9]\d{8,10}/
   }
 ]
@@ -35,17 +35,20 @@ const bot = new builder.UniversalBot(connector)
 
 bot.beginDialogAction('job', '/job')
 bot.beginDialogAction('help', '/help', { matches: /^help/i })
-bot.endConversationAction(
-  'goodbyeAction',
-  'Si vous souhaitez relancer la conversation, parlez-moi ou taper "menu"',
-  {
-    matches: /^goodbye|quit|bye/i
-  }
-)
+bot.endConversationAction('goodbyeAction', 'goodbyeAction', {
+  matches: /^goodbye|quit|bye/i
+})
 
 bot.dialog('/', [
   function(session) {
-    session.send('Hello ! Je suis Rabbot, on m’a programmé pour vous trouver un emploi 😉.')
+    session.preferredLocale('fr', err => {
+      if (!err) {
+        session.endDialog('')
+      } else {
+        session.error(err)
+      }
+    })
+    session.send('greeting')
     session.beginDialog('/help')
   },
   function(session) {
@@ -54,22 +57,20 @@ bot.dialog('/', [
   },
   function(session) {
     // Always say goodbye
-    session.send('Si vous souhaitez relancer la conversation, parlez-moi ou taper "menu"')
+    session.send('restart')
   }
 ])
 
 bot.dialog('/help', [
   function(session) {
-    session.endDialog(
-      'Les commandes globales sont accessibles à tous moment :\n\n* menu - Quitte et relance le menu.\n* goodbye - Quitte la conversation.\n* help - Montre ce texte.'
-    )
+    session.endDialog('help')
   }
 ])
 
 bot
   .dialog('/menu', [
     function(session) {
-      session.send('Voulez-vous postuler pour un de ces profils ?')
+      session.send('menu')
       getJobCarrousel(session).then(cards => {
         let reply = new builder.Message(session)
           .attachmentLayout(builder.AttachmentLayout.carousel)
@@ -115,11 +116,13 @@ bot.dialog('/job', [
       const base64pdf = btoa(String.fromCharCode.apply(null, pdf))
       response = {
         candidat: data.data.candidat
+
         // base64pdf: base64pdf
       }
     } else {
       response = {
         candidat: data.data.candidat
+
         // base64pdf: base64pdf
       }
     }
@@ -135,8 +138,9 @@ bot.dialog('/job', [
       })
   },
   function(session) {
+    session.send('finish')
     session.endConversation(
-      'Si vous souhaitez relancer la conversation, parlez-moi ou taper "menu"'
+      'restart'
     )
   }
 ])
@@ -261,11 +265,11 @@ bot
             console.log('ATTACHEMENT TYPE', attachment.contentType)
             if (attachment.contentType !== 'application/pdf') {
               let reply = new builder.Message(session).text(
-                'Pouvez-vous télécharger votre CV en format PDF ? Si vous ne pouvez pas, taper "skip"'
+                'upload_question'
               )
               session.send(reply)
             } else {
-              session.send('Votre CV a été reçu.')
+              session.send('upload_verified')
               session.endDialogWithResult({
                 response: response
               })
@@ -280,21 +284,24 @@ bot
       } else {
         // No attachments were sent
         let reply = new builder.Message(session).text(
-          'Pouvez-vous télécharger votre CV en format PDF ? Si vous ne pouvez pas, taper "skip"'
+          'upload_question'
         )
         session.send(reply)
       }
     }
   ])
-  .cancelAction('cancelList', 'Pas de CV upload', {
+  .cancelAction('cancelList', 'upload_no_cv', {
     matches: /^skip/i
   })
 
 bot.dialog('chooseDate', [
   function(session) {
     session.endDialog('')
+
     // session.endDialog(
-    //   "Choisissez une date. Cette fonctionnalité n'est pas encore finalisée"
+
+    //   "choose_date"
+
     // )
   }
 ])
@@ -323,7 +330,7 @@ const getJobCarrousel = session => {
               session,
               'job',
               job.id,
-              'Apprenez-en plus'
+              'job_more'
             )
           ])
           memo.push(card)

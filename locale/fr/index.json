@@ -1,0 +1,17 @@
+{
+  "firstname": "Pouvez-vous m’indiquer votre nom ?",
+  "lastname": "Bien reçu. Pouvez-vous m’indiquer votre prénom ?",
+  "email": "Pouvez-vous m’indiquer votre e-mail ? Il ne sera utilisé que pour vous recontacter.",
+  "mobile": "Pouvez-vous m’indiquer votre numéro de téléphone au format +33XXXXXXXX ? Il ne sera utilisé que pour vous recontacter.",
+  "goodbyeAction": "Si vous souhaitez relancer la conversation, parlez-moi ou taper 'menu'",
+  "greeting": "Hello ! Je suis Rabbot, on m’a programmé pour vous trouver un emploi 😉.",
+  "restart": "Si vous souhaitez relancer la conversation, parlez-moi ou taper 'menu'",
+  "help": "Les commandes globales sont accessibles à tous moment :\n\n* menu - Quitte et relance le menu.\n* goodbye - Quitte la conversation.\n* help - Montre ce texte.",
+  "menu": "Voulez-vous postuler pour un de ces profils ?",
+  "upload_question": "Pouvez-vous télécharger votre CV en format PDF ? Si vous ne pouvez pas, taper 'skip'",
+  "upload_verified": "Votre CV a été reçu.",
+  "upload_no_cv": "Pas de CV upload",
+  "choose_date": "Choisissez une date. Cette fonctionnalité n'est pas encore finalisée",
+  "job_more": "Apprenez-en plus",
+  "finish": "Votre profil a été envoyé, vous recevrez une demande de rendez-vous bientôt. Merci de vos réponses."
+}
