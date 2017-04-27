@@ -33,26 +33,104 @@ bot
     matches: /^menu|show menu|reload|list|start|restart/i
   })
 
-bot.endConversationAction('goodbyeAction', 'Ok... See you next time.', {
-  matches: /^goodbye|quit|bye/i
-})
+bot.endConversationAction(
+  'goodbyeAction',
+  'Si vous souhaitez relancer la conversation, parlez moi ou taper menu',
+  {
+    matches: /^goodbye|quit|bye/i
+  }
+)
 
 bot.dialog('/job', [
   function(session, args) {
     session.userData.questions = []
-    session.sendTyping();
+    session.sendTyping()
     getQuestions(args.data).then(data => {
-      // FIXME: Lookl at session
-      session.userData.questions = data.questions
-      session.beginDialog('askQuestions')
+      session.userData = {
+        questions: data.questions,
+        c: {},
+        data: {
+          candidat: {},
+          profile: {}
+        },
+        id: args.data
+      }
+      session.beginDialog('askStaticQuestions')
     })
   },
+  function(session, args) {
+    session.beginDialog('askJobsQuestions')
+  },
   function(session) {
+    session.send('Merci d"avoir répondu aux questions')
+    let data = session.userData
+    let response = {
+      candidat: data.data.candidat
+    }
+    response[`profile_${data.id}`] = data.data.profile
+    sendResponseData(response)
     session.beginDialog('uploadCV')
+  },
+  function(session, args) {
+    session.beginDialog('chooseDate')
+  },
+  function(session) {
+    session.endConversation(
+      'Si vous souhaitez relancer la conversation, parlez moi ou taper menu'
+    )
   }
 ])
 
-bot.dialog('askQuestions', [
+var staticQuestions = [
+  {
+    field: 'firstname',
+    prompt: 'Quelle est votre nom ?'
+  },
+  {
+    field: 'lastname',
+    prompt: 'Quelle est votre prénom ?'
+  },
+  {
+    field: 'email',
+    prompt: 'Quelle est votre email ?'
+  },
+  {
+    field: 'mobile',
+    prompt: 'Quelle est votre mobile ?'
+  }
+]
+
+bot.dialog('askStaticQuestions', [
+  function(session, args) {
+    // Save previous state (create on first call)
+    session.userData.c.index = args ? args.index : 0
+    session.userData.c.form = args ? args.form : {}
+
+    // Prompt user for next field
+    builder.Prompts.text(
+      session,
+      staticQuestions[session.userData.c.index].prompt
+    )
+  },
+  function(session, results) {
+    // Save users reply
+    var field = staticQuestions[session.userData.c.index++].field
+    session.userData.data.candidat[field] = results.response
+
+    // Check for end of form
+    if (session.userData.c.index >= staticQuestions.length) {
+      // Return completed form
+      session.endDialogWithResult({
+        response: session.userData.data.candidat
+      })
+    } else {
+      // Next field
+      session.replaceDialog('askStaticQuestions', session.userData.c)
+    }
+  }
+])
+
+bot.dialog('askJobsQuestions', [
   function(session, args) {
     // Save previous state (create on first call)
     session.dialogData.index = args ? args.index : 0
@@ -61,7 +139,10 @@ bot.dialog('askQuestions', [
     // Prompt user for next field
     switch (session.userData.questions[session.dialogData.index].type) {
       case 'string':
-        builder.Prompts.text(session, session.userData.questions[session.dialogData.index].body)
+        builder.Prompts.text(
+          session,
+          session.userData.questions[session.dialogData.index].body
+        )
         break
 
       case 'int':
@@ -80,13 +161,21 @@ bot.dialog('askQuestions', [
         break
 
       default:
-        builder.Prompts.text(session, session.userData.questions[session.dialogData.index].body)
+        builder.Prompts.text(
+          session,
+          session.userData.questions[session.dialogData.index].body
+        )
     }
   },
   function(session, results) {
     // Save users reply
-    var field = session.userData.questions[session.dialogData.index++].id
-    session.dialogData.form[field] = results.response
+    var r = session.userData.questions[session.dialogData.index++]
+    if (r.type === 'string' || r.type === 'int') {
+      session.userData.data.profile[`question_${r.id}`] = results.response
+    } else if (r.type === 'enum') {
+      session.userData.data.profile[`question_${r.id}`] =
+        results.response.entity
+    }
 
     // Check for end of form
     if (session.dialogData.index >= session.userData.questions.length) {
@@ -96,13 +185,8 @@ bot.dialog('askQuestions', [
       })
     } else {
       // Next field
-      session.replaceDialog('askQuestions', session.dialogData)
+      session.replaceDialog('askJobsQuestions', session.dialogData)
     }
-  },
-  function(session, response) {
-    session.send('Merci d"avoir répondu aux questions')
-    sendResponseData(response)
-    session.beginDialog('uploadCV')
   }
 ])
 
@@ -119,18 +203,17 @@ bot.dialog('uploadCV', [
 
       fileDownload
         .then(response => {
-          // Send reply with attachment type & size
-          var reply = new builder.Message(session).text(
-            'Attachment of %s type and size of %s bytes received.',
-            attachment.contentType,
-            response.length
-          )
-          session.send(reply)
-          session.send('Merci d"avoir upload votre CV')
-          session.beginDialog('chooseDate')
+          if (attachment.contentType !== 'application/pdf') {
+            var reply = new builder.Message(session).text(
+              'Pouvez vous upload votre CV en format pdf ?'
+            )
+            session.send(reply)
+          } else {
+            session.endDialog('Merci davoir upload votre CV')
+          }
         })
         .catch(err => {
-          console.log('Error downloading attachment:', {
+          throw new Error('Error downloading attachment:', {
             statusCode: err.statusCode,
             message: err.response.statusMessage
           })
@@ -138,7 +221,7 @@ bot.dialog('uploadCV', [
     } else {
       // No attachments were sent
       var reply = new builder.Message(session).text(
-        'Hi there! This sample is intented to show how can I receive attachments but no attachment was sent to me. Please try again sending a new message with an attachment.'
+        'Pouvez vous upload votre CV en format pdf ?'
       )
       session.send(reply)
     }
@@ -147,7 +230,9 @@ bot.dialog('uploadCV', [
 
 bot.dialog('chooseDate', [
   function(session) {
-    session.send('Choose a date')
+    session.endDialog(
+      "Choississez une date. Cette fonctionnalité n'est pas encore finaliser."
+    )
   }
 ])
 
@@ -204,26 +289,6 @@ const getQuestions = id => {
 }
 
 const sendResponseData = response => {
-  // data = {
-  //   candidat: {
-  //     firstname: 'Youn',
-  //     lastname: 'Dupont',
-  //     email: 'john@gmail.com',
-  //     mobile: '+3365518743'
-  //   },
-  //   profile_1244: {
-  //     question_1: {
-  //       libelle: 'Quel est vôtre âge ?',
-  //       open: true,
-  //       response: '27 ans'
-  //     },
-  //     question_2: {
-  //       libelle: "Quels sont vos centres d'activités ?",
-  //       open: false,
-  //       response: 'Le sport, la musique et la cuisine'
-  //     }
-  //   }
-  // }
   const options = {
     method: 'POST',
     uri: baseUrl,
