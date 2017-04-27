@@ -1,10 +1,12 @@
 require('dotenv-extended').load()
 require('./src/buffer')
+const path = require('path')
 const express = require('express')
 const bodyParser = require('body-parser')
 const { connector, bot } = require('./src/bot')
 
 const app = express()
+app.use(express.static('public'));
 app.use(
   bodyParser.json({
     limit: '300mb',
@@ -25,7 +27,15 @@ app.set('port', process.env.PORT || 5000)
 app.use(bodyParser.json())
 
 app.get('/', function(req, res) {
-  res.send('Hello World!')
+  res.sendFile('/public/index.html')
+})
+
+app.get('/terms-of-use', function(req, res) {
+  res.sendFile(path.join(__dirname, './public/terms-of-use.html'))
+})
+
+app.get('/privacy-rules', function(req, res) {
+  res.sendFile(path.join(__dirname, './public/privacy-rules.html'))
 })
 
 app.post('/api/messages', connector.listen())
