@@ -218,43 +218,47 @@ bot.dialog('askJobsQuestions', [
   }
 ])
 
-bot.dialog('uploadCV', [
-  function(session) {
-    let msg = session.message
-    if (msg.attachments.length) {
-      // Message with attachment, proceed to download it.
-      // Skype & MS Teams attachment URLs are secured by a JwtToken, so we need to pass the token from our bot.
-      let attachment = msg.attachments[0]
-      let fileDownload = checkRequiresToken(msg)
-        ? requestWithToken(attachment.contentUrl)
-        : request(attachment.contentUrl)
+bot
+  .dialog('uploadCV', [
+    function(session) {
+      let msg = session.message
+      if (msg.attachments.length) {
+        // Message with attachment, proceed to download it.
+        // Skype & MS Teams attachment URLs are secured by a JwtToken, so we need to pass the token from our bot.
+        let attachment = msg.attachments[0]
+        let fileDownload = checkRequiresToken(msg)
+          ? requestWithToken(attachment.contentUrl)
+          : request(attachment.contentUrl)
 
-      fileDownload
-        .then(response => {
-          if (attachment.contentType !== 'application/pdf') {
-            let reply = new builder.Message(session).text(
-              'Pouvez vous upload votre CV en format pdf ?'
-            )
-            session.send(reply)
-          } else {
-            session.endDialog('Merci davoir upload votre CV')
-          }
-        })
-        .catch(err => {
-          throw new Error('Error downloading attachment:', {
-            statusCode: err.statusCode,
-            message: err.response.statusMessage
+        fileDownload
+          .then(response => {
+            if (attachment.contentType !== 'application/pdf') {
+              let reply = new builder.Message(session).text(
+                'Pouvez vous upload votre CV en format pdf ?'
+              )
+              session.send(reply)
+            } else {
+              session.endDialog('Merci davoir upload votre CV')
+            }
           })
-        })
-    } else {
-      // No attachments were sent
-      let reply = new builder.Message(session).text(
-        'Pouvez vous upload votre CV en format pdf ?'
-      )
-      session.send(reply)
+          .catch(err => {
+            throw new Error('Error downloading attachment:', {
+              statusCode: err.statusCode,
+              message: err.response.statusMessage
+            })
+          })
+      } else {
+        // No attachments were sent
+        let reply = new builder.Message(session).text(
+          'Pouvez vous upload votre CV en format pdf ? Si vous ne pouvez pas, taper "skip"'
+        )
+        session.send(reply)
+      }
     }
-  }
-])
+  ])
+  .cancelAction('cancelList', 'Pas de CV upload', {
+    matches: /^skip/i
+  })
 
 bot.dialog('chooseDate', [
   function(session) {
