@@ -258,6 +258,7 @@ bot
 
         fileDownload
           .then(response => {
+            console.log('ATTACHEMENT TYPE', attachment.contentType)
             if (attachment.contentType !== 'application/pdf') {
               let reply = new builder.Message(session).text(
                 'Pouvez vous upload votre CV en format pdf ?'
