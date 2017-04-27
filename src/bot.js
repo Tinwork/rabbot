@@ -127,11 +127,9 @@ bot.dialog('/job', [
     response[`profile_${data.id}`] = data.data.profile
     sendResponseData(response)
       .then(result => {
-        session.send('Votre CV a été uploadé')
         session.beginDialog('chooseDate')
       })
       .catch(err => {
-        session.send('Votre CV a été uploadé')
         session.beginDialog('chooseDate')
         throw new Error('Conncetion error', err)
       })
