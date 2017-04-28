@@ -6,7 +6,7 @@ const bodyParser = require('body-parser')
 const { connector, bot } = require('./src/bot')
 
 const app = express()
-app.use(express.static('public'));
+app.use(express.static('public'))
 app.use(
   bodyParser.json({
     limit: '300mb',
@@ -28,6 +28,10 @@ app.use(bodyParser.json())
 
 app.get('/', function(req, res) {
   res.sendFile('/public/index.html')
+})
+
+app.get('/chat', (req, res) => {
+  res.sendFile(path.join(__dirname, './public/chat.html'))
 })
 
 app.get('/terms-of-use', function(req, res) {
