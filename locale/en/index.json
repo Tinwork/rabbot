@@ -1,6 +1,6 @@
 {
   "locale_prompt": "What's your preferred language?",
-  "firstname": "Can you tell us your firstname?",
+  "firstname": "We will now collect informations about you and ask you question to create your profil.\n\n Can you tell us your firstname?",
   "lastname": "Got it. Can you tell us your lastname?",
   "email": "Can you tell us your email? It will only used for recontacting you.",
   "mobile": "Can you tell us your mobile with the format +33XXXXXXXX? It will only used for recontacting you.",

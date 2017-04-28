@@ -1,6 +1,6 @@
 {
   "locale_prompt": "Quelle est votre langague préféré ?",
-  "firstname": "Pouvez-vous m’indiquer votre nom ?",
+  "firstname": "Nous allons maintenant collecter des informations et vous envoyez des questions pour créer votre profil. \n\nPouvez-vous m’indiquer votre nom ?",
   "lastname": "Bien reçu. Pouvez-vous m’indiquer votre prénom ?",
   "email": "Pouvez-vous m’indiquer votre e-mail ? Il ne sera utilisé que pour vous recontacter.",
   "mobile": "Pouvez-vous m’indiquer votre numéro de téléphone au format +33XXXXXXXX ? Il ne sera utilisé que pour vous recontacter.",

@@ -282,22 +282,17 @@ bot
 
         fileDownload
           .then(response => {
-            console.log('ATTACHEMENT TYPE', attachment.contentType)
-            console.log(
-              attachment.contentType !== 'application/pdf' ||
-                attachment.contentType !== 'application/octet-stream'
-            )
             if (
-              attachment.contentType !== 'application/pdf' ||
-              attachment.contentType !== 'application/octet-stream'
+              attachment.contentType === 'application/pdf' ||
+              attachment.contentType === 'application/octet-stream'
             ) {
-              let reply = new builder.Message(session).text('upload_question')
-              session.send(reply)
-            } else {
               session.send('upload_verified')
               session.endDialogWithResult({
                 response: response
               })
+            } else {
+              let reply = new builder.Message(session).text('upload_question')
+              session.send(reply)
             }
           })
           .catch(err => {
