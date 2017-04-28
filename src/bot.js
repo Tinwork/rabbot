@@ -50,7 +50,7 @@ const setLocale = (session, lang) => {
 }
 
 bot.dialog('/', [
-  function(session) {
+  session => {
     if (session.userData.lang) {
       session.beginDialog('/menu')
     } else {
@@ -63,12 +63,12 @@ bot.dialog('/', [
 ])
 
 bot.dialog('localePickerDialog', [
-  function(session) {
+  session => {
     builder.Prompts.choice(session, 'locale_prompt', ['Français', 'English'], {
       listStyle: builder.ListStyle.button
     })
   },
-  function(session, results) {
+  (session, results) => {
     let locale
     switch (results.response.entity) {
       case 'English':
@@ -79,7 +79,7 @@ bot.dialog('localePickerDialog', [
         break
     }
     session.userData.lang = locale
-    session.preferredLocale(locale, function(err) {
+    session.preferredLocale(locale, err => {
       if (!err) {
         session.beginDialog('/menu')
       } else {
@@ -90,14 +90,14 @@ bot.dialog('localePickerDialog', [
 ])
 
 bot.dialog('/help', [
-  function(session) {
+  session => {
     session.endDialog('help')
   }
 ])
 
 bot
   .dialog('/menu', [
-    function(session) {
+    session => {
       session.send('menu')
       getJobCarrousel(session).then(cards => {
         let reply = new builder.Message(session)
@@ -112,7 +112,7 @@ bot
   })
 
 bot.dialog('/job', [
-  function(session, args) {
+  (session, args) => {
     session.userData.questions = []
     session.sendTyping()
     getQuestions(args.data).then(data => {
@@ -128,13 +128,13 @@ bot.dialog('/job', [
       session.beginDialog('askStaticQuestions')
     })
   },
-  function(session, args) {
+  (session, args) => {
     session.beginDialog('askJobsQuestions')
   },
-  function(session) {
+  session => {
     session.beginDialog('uploadCV')
   },
-  function(session, upload) {
+  (session, upload) => {
     session.sendTyping()
     let response
     const pdf = upload.response
@@ -163,14 +163,14 @@ bot.dialog('/job', [
         throw new Error('Conncetion error', err)
       })
   },
-  function(session) {
+  session => {
     session.send('finish')
     session.endConversation('restart')
   }
 ])
 
 bot.dialog('askStaticQuestions', [
-  function(session, args) {
+  (session, args) => {
     // Save previous state (create on first call)
     session.userData.c.index = args ? args.index : 0
     session.userData.c.form = args ? args.form : {}
@@ -181,7 +181,7 @@ bot.dialog('askStaticQuestions', [
       staticQuestions[session.userData.c.index].prompt
     )
   },
-  function(session, results) {
+  (session, results) => {
     const current = staticQuestions[session.userData.c.index]
 
     if (current.regex && !current.regex.test(results.response)) {
@@ -205,7 +205,7 @@ bot.dialog('askStaticQuestions', [
 ])
 
 bot.dialog('askJobsQuestions', [
-  function(session, args) {
+  (session, args) => {
     // Save previous state (create on first call)
     session.dialogData.index = args ? args.index : 0
     session.dialogData.form = args ? args.form : {}
@@ -242,7 +242,7 @@ bot.dialog('askJobsQuestions', [
         )
     }
   },
-  function(session, results) {
+  (session, results) => {
     // Save users reply
     let r = session.userData.questions[session.dialogData.index++]
     if (r.type === 'string' || r.type === 'int') {
@@ -274,7 +274,7 @@ bot.dialog('askJobsQuestions', [
 
 bot
   .dialog('uploadCV', [
-    function(session) {
+    session => {
       let msg = session.message
       if (msg.attachments.length) {
         // Message with attachment, proceed to download it.
@@ -317,7 +317,7 @@ bot
   })
 
 bot.dialog('chooseDate', [
-  function(session) {
+  session => {
     session.endDialog('')
 
     // session.endDialog(
@@ -390,7 +390,7 @@ const sendResponseData = response => {
 }
 
 const requestWithToken = url => {
-  return obtainToken().then(function(token) {
+  return obtainToken().then(token => {
     return request({
       url: url,
       headers: {
