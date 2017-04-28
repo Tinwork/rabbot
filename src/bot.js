@@ -51,10 +51,14 @@ const setLocale = (session, lang) => {
 
 bot.dialog('/', [
   function(session) {
-    setLocale(session, session.userData.lang || langChoosed)
-    session.send('greeting')
-    session.send('help')
-    session.beginDialog('localePickerDialog')
+    if (session.userData.lang) {
+      session.beginDialog('/menu')
+    } else {
+      setLocale(session, session.userData.lang || langChoosed)
+      session.send('greeting')
+      session.send('help')
+      session.beginDialog('localePickerDialog')
+    }
   }
 ])
 
