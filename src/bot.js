@@ -5,6 +5,7 @@ const request = require('request-promise').defaults({
 })
 const baseUrl = 'http://ec2-54-77-243-23.eu-west-1.compute.amazonaws.com'
 let questions = []
+let langChoosed = 'fr'
 let staticQuestions = [
   {
     field: 'firstname',
@@ -51,7 +52,7 @@ const setLocale = (session, lang) => {
 
 bot.dialog('/', [
   function(session) {
-    setLocale(session, 'fr')
+    setLocale(session, session.userData.lang || langChoosed)
     session.send('greeting')
     session.send('help')
     session.beginDialog('localePickerDialog')
@@ -60,14 +61,12 @@ bot.dialog('/', [
 
 bot.dialog('localePickerDialog', [
   function(session) {
-    console.log('LOCALE ======= question')
     builder.Prompts.choice(session, 'locale_prompt', ['Français', 'English'], {
       listStyle: builder.ListStyle.button
     })
   },
   function(session, results) {
-    console.log('RESULTS =======', results)
-    var locale
+    let locale
     switch (results.response.entity) {
       case 'English':
         locale = 'en'
@@ -76,6 +75,7 @@ bot.dialog('localePickerDialog', [
         locale = 'fr'
         break
     }
+    session.userData.lang = locale
     session.preferredLocale(locale, function(err) {
       if (!err) {
         session.beginDialog('/menu')
@@ -113,7 +113,7 @@ bot.dialog('/job', [
     session.userData.questions = []
     session.sendTyping()
     getQuestions(args.data).then(data => {
-      session.userData = {
+      session.userData = Object.assign(session.userData, {
         questions: data.questions,
         c: {},
         data: {
@@ -121,7 +121,7 @@ bot.dialog('/job', [
           profile: {}
         },
         id: args.data
-      }
+      })
       session.beginDialog('askStaticQuestions')
     })
   },
@@ -141,13 +141,11 @@ bot.dialog('/job', [
       const base64pdf = btoa(String.fromCharCode.apply(null, pdf))
       response = {
         candidat: data.data.candidat
-
         // base64pdf: base64pdf
       }
     } else {
       response = {
         candidat: data.data.candidat
-
         // base64pdf: base64pdf
       }
     }
@@ -285,8 +283,11 @@ bot
 
         fileDownload
           .then(response => {
-            console.log('ATTACHEMENT TYPE', attachment.contentType)
-            if (attachment.contentType !== 'application/pdf') {
+            if (
+              attachment.contentType !== 'application/pdf' ||
+              (attachment.contentType !== 'application/octet-stream' &&
+                message.source === 'skype')
+            ) {
               let reply = new builder.Message(session).text('upload_question')
               session.send(reply)
             } else {
