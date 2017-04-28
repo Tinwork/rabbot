@@ -286,7 +286,7 @@ bot
             if (
               attachment.contentType !== 'application/pdf' ||
               (attachment.contentType !== 'application/octet-stream' &&
-                message.source === 'skype')
+                msg.source === 'skype')
             ) {
               let reply = new builder.Message(session).text('upload_question')
               session.send(reply)
