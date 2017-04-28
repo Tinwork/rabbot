@@ -22,8 +22,7 @@ let staticQuestions = [
   },
   {
     field: 'mobile',
-    prompt: 'mobile',
-    regex: /^\+[0-9]{2,3}[0-9]\d{8,10}/
+    prompt: 'mobile'
   }
 ]
 
