@@ -283,10 +283,10 @@ bot
 
         fileDownload
           .then(response => {
+            console.log('ATTACHEMENT TYPE', attachment.contentType)
             if (
               attachment.contentType !== 'application/pdf' ||
-              (attachment.contentType !== 'application/octet-stream' &&
-                msg.source === 'skype')
+              attachment.contentType !== 'application/octet-stream'
             ) {
               let reply = new builder.Message(session).text('upload_question')
               session.send(reply)
