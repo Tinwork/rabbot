@@ -9,3 +9,13 @@ Rabbot est un agent conversationnel crée dans le cadre d'un projet scolaire lor
 Vous aurez besoin de Node.js > 6.x.x et npm > 3.x.x.
 
 `npm install`
+
+Créer un fichier .env et remplissez les informations suivantes :
+
+```
+TIMES=2 
+MICROSOFT_APP_ID=
+MICROSOFT_APP_PASSWORD=
+```
+
+Ensuite lancer l'application en tapant `node index`

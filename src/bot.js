@@ -283,6 +283,10 @@ bot
         fileDownload
           .then(response => {
             console.log('ATTACHEMENT TYPE', attachment.contentType)
+            console.log(
+              attachment.contentType !== 'application/pdf' ||
+                attachment.contentType !== 'application/octet-stream'
+            )
             if (
               attachment.contentType !== 'application/pdf' ||
               attachment.contentType !== 'application/octet-stream'
