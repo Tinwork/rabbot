@@ -3,7 +3,7 @@ const Promise = require('bluebird')
 const request = require('request-promise').defaults({
   encoding: null
 })
-const baseUrl = 'http://ec2-54-77-243-23.eu-west-1.compute.amazonaws.com'
+const baseUrl = 'http://52.213.163.137:5000/'
 let questions = []
 let langChoosed = 'fr'
 let staticQuestions = [
@@ -99,12 +99,14 @@ bot
   .dialog('/menu', [
     session => {
       session.send('menu')
-      getJobCarrousel(session).then(cards => {
-        let reply = new builder.Message(session)
-          .attachmentLayout(builder.AttachmentLayout.carousel)
-          .attachments(cards)
-        session.send(reply)
-      })
+      getJobCarrousel(session)
+        .then(cards => {
+          let reply = new builder.Message(session)
+            .attachmentLayout(builder.AttachmentLayout.carousel)
+            .attachments(cards)
+          session.send(reply)
+        })
+        .catch(console.error)
     }
   ])
   .reloadAction('/menu', null, {
@@ -115,18 +117,20 @@ bot.dialog('/job', [
   (session, args) => {
     session.userData.questions = []
     session.sendTyping()
-    getQuestions(args.data).then(data => {
-      session.userData = Object.assign(session.userData, {
-        questions: data.questions,
-        c: {},
-        data: {
-          candidat: {},
-          profile: {}
-        },
-        id: args.data
+    getQuestions(args.data)
+      .then(data => {
+        session.userData = Object.assign(session.userData, {
+          questions: data.questions,
+          c: {},
+          data: {
+            candidat: {},
+            profile: {}
+          },
+          id: args.data
+        })
+        session.beginDialog('askStaticQuestions')
       })
-      session.beginDialog('askStaticQuestions')
-    })
+      .catch(console.error)
   },
   (session, args) => {
     session.beginDialog('askJobsQuestions')
@@ -364,7 +368,7 @@ const getJobCarrousel = session => {
 const getQuestions = id => {
   return new Promise((resolve, reject) => {
     request({
-      uri: `${baseUrl}/jobs/getdetailjob/${id}`,
+      uri: `${baseUrl}/jobs/getdetailjob /${id}`,
       json: true
     })
       .then(resolve)
