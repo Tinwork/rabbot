@@ -1,9 +1,10 @@
 const builder = require('botbuilder')
+require('./buffer')
 const Promise = require('bluebird')
 const request = require('request-promise').defaults({
   encoding: null
 })
-const baseUrl = 'http://52.213.163.137:5000/'
+const baseUrl = 'http://52.213.163.137:5000'
 let questions = []
 let langChoosed = 'fr'
 let staticQuestions = [
@@ -117,6 +118,7 @@ bot.dialog('/job', [
   (session, args) => {
     session.userData.questions = []
     session.sendTyping()
+
     getQuestions(args.data)
       .then(data => {
         session.userData = Object.assign(session.userData, {
@@ -145,7 +147,7 @@ bot.dialog('/job', [
     let data = session.userData
 
     if (pdf) {
-      const base64pdf = btoa(String.fromCharCode.apply(null, pdf))
+      // const base64pdf = btoa(String.fromCharCode.apply(null, pdf))
       response = {
         candidat: data.data.candidat
         // base64pdf: base64pdf
@@ -368,7 +370,7 @@ const getJobCarrousel = session => {
 const getQuestions = id => {
   return new Promise((resolve, reject) => {
     request({
-      uri: `${baseUrl}/jobs/getdetailjob /${id}`,
+      uri: `${baseUrl}/jobs/getdetailjob/${id}`,
       json: true
     })
       .then(resolve)
